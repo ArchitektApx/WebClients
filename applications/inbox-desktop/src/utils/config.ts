@@ -28,6 +28,8 @@ export const getExtraResource = () => {
         "./assets/proton-spinner.svg",
         "./assets/loading.html",
         "./assets/error-network.html",
+        "./assets/icons/icon.png",
+        "./assets/icons/icon.ico",
         "../../packages/styles/assets/img/errors/error-network.svg",
     ];
 

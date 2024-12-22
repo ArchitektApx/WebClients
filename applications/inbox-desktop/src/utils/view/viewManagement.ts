@@ -1,4 +1,4 @@
-import { BrowserView, BrowserWindow, Event, Rectangle, WebContents, app, nativeTheme } from "electron";
+import { BrowserView, BrowserWindow, Event, Rectangle, WebContents, Tray, app, nativeTheme } from "electron";
 import { debounce } from "lodash";
 import { getWindowBounds, saveWindowBounds } from "../../store/boundsStore";
 import { getSettings, updateSettings } from "../../store/settingsStore";
@@ -13,7 +13,7 @@ import { createContextMenu } from "../menus/menuContext";
 import { getLocalID, isAccountSwitch, isHostAllowed, isSameURL, trimLocalID } from "../urls/urlTests";
 import { getWindowConfig } from "../view/windowHelpers";
 import { handleBeforeHandle } from "./dialogs";
-import { macOSExitEvent, windowsAndLinuxExitEvent } from "./windowClose";
+import { macOSExitEvent, windowsAndLinuxExitEvent, closeToTrayExitEvent } from "./windowClose";
 import { handleBeforeInput } from "./windowShortcuts";
 import { getAppURL, URLConfig } from "../../store/urlStore";
 import metrics from "../metrics";
@@ -22,6 +22,8 @@ import { c } from "ttag";
 import { isElectronOnMac } from "@proton/shared/lib/helpers/desktop";
 import { APPS, APPS_CONFIGURATION, CALENDAR_APP_NAME, MAIL_APP_NAME } from "@proton/shared/lib/constants";
 import { MenuBarMonitor } from "./MenuBarMonitor";
+import { createTrayIcon } from "../menus/menuTrayIcon";
+import { getTraySettings } from "../../store/traySettings";
 
 type ViewID = keyof URLConfig;
 
@@ -47,6 +49,7 @@ const viewTitleMap: Record<ViewID, string> = {
 
 const PRELOADED_VIEWS: ViewID[] = ["mail", "calendar"];
 let mainWindow: undefined | BrowserWindow = undefined;
+let tray: undefined | Tray = undefined;
 
 /**
  * @see https://www.electronjs.org/docs/latest/api/web-contents#event-did-fail-load
@@ -63,6 +66,8 @@ export const IGNORED_NET_ERROR_CODES = [NET_ERROR_CODE.ABORTED];
 
 export const viewCreationAppStartup = async () => {
     mainWindow = createBrowserWindow();
+    tray = createTrayIcon();
+
     createViews();
     await showLoadingPage(viewTitleMap.mail);
 
@@ -92,7 +97,9 @@ export const viewCreationAppStartup = async () => {
 
         event.preventDefault();
 
-        if (isMac) {
+        if (tray && getTraySettings().closeToTray) {
+            closeToTrayExitEvent(mainWindow!);
+        } else if (isMac) {
             macOSExitEvent(mainWindow!);
         } else {
             windowsAndLinuxExitEvent(mainWindow!);

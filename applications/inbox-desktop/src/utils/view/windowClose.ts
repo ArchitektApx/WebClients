@@ -32,3 +32,8 @@ export const windowsAndLinuxExitEvent = (window: BrowserWindow) => {
         app.quit();
     }
 };
+
+export const closeToTrayExitEvent = (window: BrowserWindow) => {
+    mainLogger.info("close, minimize to tray");
+    window.hide();
+};
